@@ -1,4 +1,4 @@
-name: Deploy FondasiKehidupanDB
+name: Deploy Backend Database
 
 on:
   workflow_dispatch:
@@ -21,25 +21,25 @@ jobs:
 
       - name: Prepare deploy files
         run: |
-          mkdir fondasikehidupandb
-          mv docker-compose.yml .env fondasikehidupandb/
+          mkdir backend-database
+          mv docker-compose.yml .env backend-database/
 
-      - name: Copy files to Wiwokdetok Server
+      - name: Copy files to Server
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          source: "fondasikehidupandb/*"
+          source: "backend-database/*"
           target: "~/"
 
-      - name: Run on Wiwokdetok Server
+      - name: Run on Server
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd ~/fondasikehidupandb || exit 1
-            docker-compose down || true
-            docker-compose up -d
+            cd ~/backend-database || exit 1
+            docker compose down || true
+            docker compose up -d
