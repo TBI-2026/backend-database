@@ -1,11 +1,11 @@
 CREATE TABLE publisher (
     id SERIAL NOT NULL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE
+    name VARCHAR(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE book_language (
     id SERIAL NOT NULL PRIMARY KEY,
-    language VARCHAR(30) NOT NULL
+    language VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE book (
@@ -28,7 +28,7 @@ CREATE TABLE book (
 
 CREATE TABLE book_location (
     id SERIAL NOT NULL PRIMARY KEY,
-    location_name VARCHAR(100) NOT NULL,
+    location_name VARCHAR(255) NOT NULL,
     location GEOGRAPHY(Point, 4326) NOT NULL,
     id_book UUID NOT NULL,
     FOREIGN KEY (id_book) REFERENCES book(id)
@@ -36,7 +36,7 @@ CREATE TABLE book_location (
 
 CREATE TABLE author (
     id SERIAL NOT NULL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE
+    name VARCHAR(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE authored_by (
@@ -49,7 +49,7 @@ CREATE TABLE authored_by (
 
 CREATE TABLE genre (
     id SERIAL NOT NULL PRIMARY KEY,
-    genre VARCHAR(30) NOT NULL UNIQUE
+    genre VARCHAR(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE having_genre (
