@@ -99,9 +99,9 @@ SEARCH_QUERIES = [
 ]
 
 
-def fetch_books_from_open_library(total: int) -> list[dict]:
+def fetch_books_from_open_library(total: int, skip_isbns: set[str] | None = None) -> list[dict]:
     books = []
-    seen_isbns: set[str] = set()
+    seen_isbns: set[str] = set(skip_isbns or [])
     query_idx = 0
 
     print(f"Fetching {total} books from Open Library…")
@@ -267,12 +267,18 @@ def publish_book_created(ch, book_id: str, title: str, synopsis: str, cover: str
 # ---------------------------------------------------------------------------
 
 def seed(total: int, use_rabbitmq: bool) -> None:
-    raw_books = fetch_books_from_open_library(total)
-
     print(f"Connecting to PostgreSQL at {DB_CONFIG['host']}:{DB_CONFIG['port']}…")
     conn = psycopg2.connect(**DB_CONFIG)
     conn.autocommit = False
     cur = conn.cursor()
+
+    # Load existing ISBNs so fetcher skips already-seeded books
+    cur.execute("SELECT isbn FROM book")
+    existing_isbns: set[str] = {row[0] for row in cur.fetchall()}
+    if existing_isbns:
+        print(f"  Found {len(existing_isbns)} existing books in DB — will skip duplicates.")
+
+    raw_books = fetch_books_from_open_library(total, skip_isbns=existing_isbns)
 
     rmq_conn: Optional[object] = None
     rmq_ch: Optional[object] = None
@@ -338,10 +344,12 @@ def seed(total: int, use_rabbitmq: bool) -> None:
             if (i + 1) % batch_size == 0:
                 conn.commit()
 
-            if use_rabbitmq and actual_book_id == book_id:
-                publish_book_created(rmq_ch, book_id, title, synopsis, cover_url)
-
-            inserted += 1
+            if actual_book_id == book_id:
+                inserted += 1
+                if use_rabbitmq:
+                    publish_book_created(rmq_ch, book_id, title, synopsis, cover_url)
+            else:
+                skipped += 1
 
         except Exception as e:
             conn.rollback()
